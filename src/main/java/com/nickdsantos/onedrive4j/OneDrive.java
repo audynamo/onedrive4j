@@ -123,6 +123,8 @@ public class OneDrive {
 
 			Map<Object, Object> rawToken = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
 			if (rawToken != null) {
+				OneDriveUtils.throwOnError(rawToken);
+
 				accessToken = new AccessToken(
 						rawToken.get("token_type").toString(),
 						(int) Double.parseDouble(rawToken.get("expires_in").toString()),
@@ -170,6 +172,8 @@ public class OneDrive {
 
 			Map<Object, Object> rawToken = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
 			if (rawToken != null) {
+				OneDriveUtils.throwOnError(rawToken);
+
 				accessToken = new AccessToken(
 						rawToken.get("token_type").toString(),
 						(int) Double.parseDouble(rawToken.get("expires_in").toString()),
