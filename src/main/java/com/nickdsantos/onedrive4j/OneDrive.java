@@ -7,6 +7,7 @@ package com.nickdsantos.onedrive4j;
 import com.google.gson.Gson;
 import org.apache.http.Consts;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -28,9 +29,18 @@ import java.util.Objects;
  * @author Nick DS (me@nickdsantos.com)
  *
  */
-public class OneDrive {
+public class OneDrive implements AutoCloseable {
 	static Logger logger = Logger.getLogger(OneDrive.class.getName());
-	
+
+	@Override
+	public void close() throws Exception
+	{
+		if (_httpClient != null)
+		{
+		    _httpClient.close();
+		}
+	}
+
 	private static class AlbumServiceHolder {
 		public static AlbumService _albumServiceInstance = new AlbumService();
 	}
@@ -50,14 +60,24 @@ public class OneDrive {
 	
 	private String _clientId;
 	private String _clientSecret;
-	private String _callback;		
+	private String _callback;
+	private CloseableHttpClient _httpClient;
 	
 	public OneDrive(String clientId, String clientSecret, String callback) {
 		_clientId = clientId;
 		_clientSecret = clientSecret;
 		_callback = callback;
+		_httpClient = HttpClients.createDefault();
 	}
-	
+
+	public OneDrive(String _clientId, String _clientSecret, String _callback, CloseableHttpClient _httpClient)
+	{
+		this._clientId = _clientId;
+		this._clientSecret = _clientSecret;
+		this._callback = _callback;
+		this._httpClient = _httpClient;
+	}
+
 	public AlbumService getAlbumService() {
 		return AlbumServiceHolder._albumServiceInstance;
 	}
@@ -117,22 +137,20 @@ public class OneDrive {
 		params.add(new BasicNameValuePair("grant_type", "authorization_code"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			HttpPost httpPost = new HttpPost(uri);
-			httpPost.setEntity(formEntity);
+		HttpPost httpPost = new HttpPost(uri);
+		httpPost.setEntity(formEntity);
 
-			Map<Object, Object> rawToken = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
-			if (rawToken != null) {
-				accessToken = new AccessToken(
-						rawToken.get("token_type").toString(),
-						(int) Double.parseDouble(rawToken.get("expires_in").toString()),
-						rawToken.get("scope").toString(),
-						rawToken.get("access_token").toString(),
-						Objects.toString(rawToken.get("refresh_token"), null),
-						rawToken.get("user_id").toString());
-			}
+		Map<Object, Object> rawToken = _httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
+		if (rawToken != null) {
+			accessToken = new AccessToken(
+					rawToken.get("token_type").toString(),
+					(int) Double.parseDouble(rawToken.get("expires_in").toString()),
+					rawToken.get("scope").toString(),
+					rawToken.get("access_token").toString(),
+					Objects.toString(rawToken.get("refresh_token"), null),
+					rawToken.get("user_id").toString());
 		}
-		
+
 		return accessToken;
 	}
 
@@ -164,26 +182,24 @@ public class OneDrive {
 		params.add(new BasicNameValuePair("grant_type", "refresh_token"));
 		UrlEncodedFormEntity formEntity = new UrlEncodedFormEntity(params, Consts.UTF_8);
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-			HttpPost httpPost = new HttpPost(uri);
-			httpPost.setEntity(formEntity);
+		HttpPost httpPost = new HttpPost(uri);
+		httpPost.setEntity(formEntity);
 
-			Map<Object, Object> rawResponse = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
+		Map<Object, Object> rawResponse = _httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
 
-			if (rawResponse != null) {
-				if (rawResponse.containsKey("error")) {
-					throw new IOException(rawResponse.get("error") + " : " +
-							rawResponse.get("error_description"));
-				}
-
-				accessToken = new AccessToken(
-						rawResponse.get("token_type").toString(),
-						(int) Double.parseDouble(rawResponse.get("expires_in").toString()),
-						rawResponse.get("scope").toString(),
-						rawResponse.get("access_token").toString(),
-						Objects.toString(rawResponse.get("refresh_token"), null),
-						Objects.toString(rawResponse.get("user_id"), null));
+		if (rawResponse != null) {
+			if (rawResponse.containsKey("error")) {
+				throw new IOException(rawResponse.get("error") + " : " +
+						rawResponse.get("error_description"));
 			}
+
+			accessToken = new AccessToken(
+					rawResponse.get("token_type").toString(),
+					(int) Double.parseDouble(rawResponse.get("expires_in").toString()),
+					rawResponse.get("scope").toString(),
+					rawResponse.get("access_token").toString(),
+					Objects.toString(rawResponse.get("refresh_token"), null),
+					Objects.toString(rawResponse.get("user_id"), null));
 		}
 
 		return accessToken;
@@ -209,9 +225,9 @@ public class OneDrive {
 			throw new IllegalStateException("Invalid drives path", e);
 		}
 
-		try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+		try {
 			HttpGet httpGet = new HttpGet(uri);
-			String rawResponse = httpClient.execute(httpGet, new OneDriveStringResponseHandler());
+			String rawResponse = _httpClient.execute(httpGet, new OneDriveStringResponseHandler());
 			return new Gson().fromJson(rawResponse, Me.class);
 		} catch (Exception e) {
 			throw new IOException("Error getting drives", e);
