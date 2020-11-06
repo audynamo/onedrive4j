@@ -171,7 +171,7 @@ public class OneDrive {
 			httpPost.setEntity(formEntity);
 
 			Map<Object, Object> rawResponse = httpClient.execute(httpPost, new OneDriveJsonToMapResponseHandler());
-			if (rawToken != null) {
+			if (rawResponse != null) {
 				OneDriveUtils.throwOnError(rawResponse);
 
 				accessToken = new AccessToken(
