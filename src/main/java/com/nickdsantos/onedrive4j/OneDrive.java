@@ -175,12 +175,12 @@ public class OneDrive {
 				OneDriveUtils.throwOnError(rawToken);
 
 				accessToken = new AccessToken(
-						rawToken.get("token_type").toString(),
-						(int) Double.parseDouble(rawToken.get("expires_in").toString()),
-						rawToken.get("scope").toString(),
-						rawToken.get("access_token").toString(),
-						Objects.toString(rawToken.get("refresh_token"), null),
-						Objects.toString(rawToken.get("user_id"), null));
+						rawResponse.get("token_type").toString(),
+						(int) Double.parseDouble(rawResponse.get("expires_in").toString()),
+						rawResponse.get("scope").toString(),
+						rawResponse.get("access_token").toString(),
+						Objects.toString(rawResponse.get("refresh_token"), null),
+						Objects.toString(rawResponse.get("user_id"), null));
 			}
 		}
 
