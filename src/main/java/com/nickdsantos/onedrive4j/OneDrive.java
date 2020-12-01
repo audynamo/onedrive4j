@@ -23,14 +23,15 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Nick DS (me@nickdsantos.com)
  *
  */
 public class OneDrive implements AutoCloseable {
-	static Logger logger = Logger.getLogger(OneDrive.class.getName());
+	static Logger logger = LoggerFactory.getLogger(OneDrive.class.getName());
 
 	@Override
 	public void close() throws Exception
