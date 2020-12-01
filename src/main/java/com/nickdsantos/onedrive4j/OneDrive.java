@@ -121,6 +121,17 @@ public class OneDrive implements AutoCloseable {
 	public AccessToken getAccessToken(String authorizationCode) throws IOException {
 		AccessToken accessToken = null;
 
+		URI uri;
+		try {
+			uri = new URIBuilder()
+						.setScheme(DEFAULT_SCHEME)
+						.setHost(LOGIN_API_HOST)
+						.setPath(ACCESS_TOKEN_URL_PATH)
+						.build();
+		} catch (URISyntaxException e) {
+			throw new IllegalStateException("Invalid access token path", e);
+		}
+
 		List<NameValuePair> params = ImmutableList.<NameValuePair>of(
 				new BasicNameValuePair("client_id", _clientId),
 				new BasicNameValuePair("redirect_uri", _callback),
@@ -155,6 +166,17 @@ public class OneDrive implements AutoCloseable {
      */
 	public AccessToken getAccessTokenFromRefreshToken(String refreshToken) throws IOException {
 		AccessToken accessToken = null;
+
+		URI uri;
+		try {
+			uri = new URIBuilder()
+						.setScheme(DEFAULT_SCHEME)
+						.setHost(LOGIN_API_HOST)
+						.setPath(ACCESS_TOKEN_URL_PATH)
+						.build();
+		} catch (URISyntaxException e) {
+			throw new IllegalStateException("Invalid access token path", e);
+		}
 
 		List<NameValuePair> params = ImmutableList.<NameValuePair>of(
 			new BasicNameValuePair("client_id", _clientId),
